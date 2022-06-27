@@ -1,0 +1,369 @@
+package project;
+
+import java.util.*;
+import java.sql.*;
+
+public class MainApp {
+
+	public static void main(String[] args) {
+		// TODO Auto-generated method stub
+		Scanner sc = new Scanner(System.in);
+		AbstractMenu.printMenu(sc);
+		
+	}
+
+}
+
+interface Menu
+{
+	UserMenu um = new UserMenu();
+	AdminMenu am = new AdminMenu();
+	int pass = 1234;
+}
+
+abstract class AbstractMenu implements Menu
+{
+	static void printMenu(Scanner sc)
+	{
+		System.out.println("===============================");
+		System.out.println("=======영화프로그램을 실행합니다======");
+		System.out.println("===============================");
+		System.out.println("1.사용자 페이지 2. 관리자 페이지 3.프로그램 종료");
+		int ma = sc.nextInt();
+		switch(ma)
+		{
+		case 1:
+			while(true)
+			{
+				um.printMenu(sc);
+				break;
+			}
+		case 2:
+			System.out.println("비밀번호를 입력하세요.");
+			int pswd = sc.nextInt();
+			if(pswd == pass)
+			{
+				while(true)
+				{
+					am.printMenu(sc);
+					break;
+				}
+			}
+			else
+			{
+				System.out.println("잘못된 비밀번호입니다.");
+				break;
+			}
+		case 3:
+			System.out.println("프로그램을 종료합니다.");
+			break;
+		}
+	}
+}
+
+//=========================================================================
+//------------------------------관리자메뉴------------------------------------
+//=========================================================================
+class AdminMenu
+{
+	private int admin1;
+	Movie m;
+		
+	void printMenu(Scanner sc)
+	{
+		System.out.println("1.영화등록 2.영화목록 3.영화삭제 4.메인메뉴");
+		admin1 = sc.nextInt();
+		
+		switch(admin1)
+		{
+		case 1:
+			m = new Movie();
+			m.addmovie(sc);
+			
+			break;
+		case 2:
+			System.out.println("영화목록을 출력합니다.");
+			m = new Movie();
+			m.movielist(sc);
+			break;
+		case 3:
+			System.out.println("삭제할 영화번호를 선택하세요.");
+			System.out.println("번호||영화제목||영화장르");
+			m = new Movie();
+			m.deletemovie(sc);
+			break;
+		case 4:
+			System.out.println("메인메뉴로 이동합니다.");
+			AbstractMenu.printMenu(sc);
+			break;
+		}
+	}
+}
+
+//=========================================================================
+//------------------------------영화DB--------------------------------------
+//=========================================================================
+class Movie
+{	
+	public void addmovie(Scanner sc) {
+		long Ts = System.currentTimeMillis();
+		System.out.println("추가할 영화 제목을 입력하세요.");
+		String mn = sc.next();
+		System.out.println("추가할 영화의 장르를 입력하세요.");
+		String g = sc.next();
+		
+		Connection conn =null;
+		Statement stmt = null;
+		
+		String sql ="";
+		
+		try {
+			DBConnect dbconn = DBConnect.getInstance();
+			conn = dbconn.getConnection();
+			stmt = conn.createStatement();
+			sql = "create database if not exists movie;";
+			stmt.executeUpdate(sql);
+			sql = "use movie";
+			stmt.executeUpdate(sql);
+			sql = "insert into movie(movie_name, movie_genre, movie_number) values ('"+mn+"','"+g+"','"+Ts+"');";
+			stmt.executeUpdate(sql);
+		}catch(Exception e) {
+			e.printStackTrace();
+		}
+		System.out.println("영화가 추가되었습니다.");
+		AdminMenu r;
+		r = new AdminMenu();
+		r.printMenu(sc);
+	}
+	
+	public void deletemovie(Scanner sc) {
+		Connection conn =null;
+		Statement stmt = null;
+		ResultSet rs = null;
+		
+		String sql ="";
+		
+		try {
+			DBConnect dbconn = DBConnect.getInstance();
+			conn = dbconn.getConnection();
+			stmt = conn.createStatement();
+			stmt.executeUpdate("create database if not exists movie;");
+			stmt.executeUpdate("use movie;");
+			stmt.executeUpdate("create table if not exists movie(num int auto_increment primary key, movie_name varchar(20), movie_genre varchar(10), movie_number varchar(30));");
+			sql = "select * from movie;";
+			rs=stmt.executeQuery(sql);
+			while(rs.next()){
+				String num=rs.getString("num");
+				String movie_name=rs.getString("movie_name");
+				String movie_genre=rs.getString("movie_genre");
+				//String movie_number=rs.getString("movie_number"); 영화 고유번호
+				System.out.println(" "+num+" ||"+movie_name+"||"+movie_genre);
+			}
+			int del = sc.nextInt();
+			sql = "delete from movie where num="+del+";";
+			stmt.executeUpdate(sql);
+			sql = "alter table movie drop num;";
+			stmt.executeUpdate(sql);
+			sql = "alter table movie add num int auto_increment unique key first;";
+			stmt.executeUpdate(sql);
+			System.out.println("삭제가 완료되었습니다.");
+			AdminMenu r2;
+			r2 = new AdminMenu();
+			r2.printMenu(sc);
+		}catch(Exception e) {
+			e.printStackTrace();
+		}
+	}
+	
+	public void movielist(Scanner sc) {
+			Connection conn =null;
+			Statement stmt = null;
+			ResultSet rs = null;
+			
+			String sql ="";
+						
+			try {
+				DBConnect dbconn = DBConnect.getInstance();
+				conn = dbconn.getConnection();
+				stmt = conn.createStatement();
+				stmt.executeUpdate("create database if not exists movie;");
+				stmt.executeUpdate("use movie;");
+				stmt.executeUpdate("create table if not exists movie(num int auto_increment primary key, movie_name varchar(20), movie_genre varchar(10), movie_number varchar(30));");
+				sql = "select * from movie;";
+				rs=stmt.executeQuery(sql);
+				System.out.println("번호||영화제목||영화장르");
+				while(rs.next()){
+					String num=rs.getString("num");
+					String movie_name=rs.getString("movie_name");
+					String movie_genre=rs.getString("movie_genre");
+					//String movie_number=rs.getString("movie_number"); 영화고유번호
+					System.out.println(" "+num+" ||"+movie_name+"||"+movie_genre);
+				}
+			AdminMenu r2;
+			r2 = new AdminMenu();
+			r2.printMenu(sc);
+		}catch(Exception e) {
+			e.printStackTrace();
+		}
+		
+	}
+	
+}
+
+//=========================================================================
+//------------------------------DB접속--------------------------------------
+//=========================================================================
+class DBConnect
+{
+	private static DBConnect db = new DBConnect();
+	private Connection conn=null;
+	String jdbc_driver = "com.mysql.cj.jdbc.Driver";
+	String jdbc_url = "jdbc:mysql://localhost:3306";
+	
+	private DBConnect()
+	{
+		Properties properties = new Properties();
+		properties.setProperty("user", "root");
+		properties.setProperty("password", "qwer1234");
+		properties.setProperty("useSSL", "false");
+		properties.setProperty("autoReconnect", "true");
+		properties.setProperty("serverTimezone", "UTC");
+		try {
+			Class.forName(jdbc_driver);
+			conn = DriverManager.getConnection(jdbc_url, properties);
+		}catch(Exception e) {
+			e.printStackTrace();
+		}
+	}
+	static DBConnect getInstance()
+	{
+		return db;
+	}
+	Connection getConnection()
+	{
+		return conn;
+	}
+}
+
+//=========================================================================
+//------------------------------사용자메뉴------------------------------------
+//=========================================================================
+class UserMenu
+{
+	private int user1;
+
+	Movie m;
+	Reservation r;
+	
+	void printMenu(Scanner sc)
+	{
+		System.out.println("1.영화예매 2.예매확인 3.예매취소");
+		user1 = sc.nextInt();
+		
+		switch(user1)
+		{
+		case 1:
+			r = new Reservation();
+			r.addrs(sc);
+			break;
+		case 2:
+			r=new Reservation();
+			r.rscheck(sc);
+			break;
+		case 3:
+			r=new Reservation();
+			r.deleters(sc);
+			break;
+		}
+	}
+}
+
+class Reservation
+{
+	public void addrs(Scanner sc) {
+		long rsnum = System.currentTimeMillis();
+		System.out.println("예매할 영화를 선택하세요.");
+		String a = sc.next();
+		System.out.println("열을 선택하세요. (A,B,C,D,E)");
+		String b = sc.next();
+		System.out.println("좌석을 선택하세요. (1,2,3,4,5,6)");
+		String c = sc.next();
+		String seat = b+c;
+		
+		Connection conn =null;
+		Statement stmt = null;
+		String sql ="";
+		
+		try {
+			DBConnect dbconn = DBConnect.getInstance();
+			conn = dbconn.getConnection();
+			stmt = conn.createStatement();
+			sql = "use movie";
+			stmt.executeUpdate(sql);
+			sql = "insert into reservation(num, rs_number, seat_num) values ('"+a+"','"+rsnum+"','"+seat+"');";
+			stmt.executeUpdate(sql);
+		}catch(Exception e) {
+			e.printStackTrace();
+		}
+		System.out.println("예매가 완료되었습니다.");
+		AbstractMenu.printMenu(sc);
+	}
+	
+	public void rscheck(Scanner sc) {
+		System.out.println("예매번호를 입력하세요.");
+		int rsnum = sc.nextInt();
+		Connection conn =null;
+		Statement stmt = null;
+		ResultSet rs = null;
+		String sql ="";
+		
+		try {
+			DBConnect dbconn = DBConnect.getInstance();
+			conn = dbconn.getConnection();
+			stmt = conn.createStatement();
+			sql = "use movie";
+			stmt.executeUpdate(sql);
+			sql = "select * from reservation join movie using (num) where rs_number='"+rsnum+"';";
+			rs=stmt.executeQuery(sql);
+			while(rs.next()){
+				String movie_name=rs.getString("movie_name");
+				String rs_number=rs.getString("rs_number");
+				String seat_number=rs.getString("seat_number");
+				System.out.println("영화 예매내역");
+				System.out.println("영화제목 : "+movie_name+", 예매번호 : "+ rs_number +", 예매좌석 : " + seat_number);
+			}
+		}catch(Exception e) {
+			e.printStackTrace();
+		}
+		
+		AbstractMenu.printMenu(sc);
+	}
+	
+	public void deleters(Scanner sc) {
+		System.out.println("취소할 예매번호를 입력하세요.");
+		int rsnum = sc.nextInt();
+		Connection conn =null;
+		Statement stmt = null;
+		String sql ="";
+		
+		try {
+			DBConnect dbconn = DBConnect.getInstance();
+			conn = dbconn.getConnection();
+			stmt = conn.createStatement();
+			sql = "use movie";
+			stmt.executeUpdate(sql);
+			sql = "delete from reservation where rs_number='"+rsnum+"';";
+			stmt.executeUpdate(sql);
+			System.out.println("예매가 취소되었습니다.");
+			
+		}catch(Exception e) {
+			e.printStackTrace();
+		}
+		
+		AbstractMenu.printMenu(sc);
+	}
+}
+class Seats
+{
+	
+}
